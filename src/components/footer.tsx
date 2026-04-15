@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Wrench, MapPin, Mail, Phone } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { farmAddress, farmDirectionsHref } from "@/lib/site";
 
 export function Footer() {
   return (
@@ -56,7 +57,14 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2.5 text-sm text-earth-400">
                 <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-rust-500" />
-                663 McIntyre St W, North Bay, Ontario
+                <a
+                  href={farmDirectionsHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-rust-400"
+                >
+                  {farmAddress}
+                </a>
               </li>
               <li className="flex items-start gap-2.5 text-sm text-earth-400">
                 <Mail className="h-4 w-4 mt-0.5 shrink-0 text-rust-500" />

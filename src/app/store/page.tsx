@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { farmAddress, farmDirectionsHref } from "@/lib/site";
 import { ShoppingCart, Star, Filter, ArrowRight } from "lucide-react";
 
 const storeImages = [
@@ -356,12 +357,20 @@ export default function StorePage() {
                   Can&apos;t decide? Visit the farm.
                 </h2>
                 <p className="max-w-md leading-relaxed text-earth-300">
-                  Come see our pipes in person at 663 McIntyre St W, North Bay,
-                  Ontario. Walk the fields, feel the rust, and pick your perfect
-                  pipe straight from the earth.
+                  Come see our pipes in person at {farmAddress}. Walk the
+                  fields, feel the rust, and pick your perfect pipe straight
+                  from the earth.
                 </p>
               </div>
               <Button
+                render={
+                  <a
+                    href={farmDirectionsHref}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+                nativeButton={false}
                 size="lg"
                 className="h-12 shrink-0 bg-white px-8 text-base font-semibold text-earth-900 hover:bg-earth-50"
               >
