@@ -124,10 +124,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: clip;
   }
   html {
     @apply font-sans;
     scroll-behavior: auto; /* Lenis handles smooth scrolling */
+    overflow-x: clip;
   }
 }
 
