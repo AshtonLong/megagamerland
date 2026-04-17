@@ -3,7 +3,14 @@
 import { useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import { Wrench, MapPin, Mail, Phone } from "lucide-react";
-import { farmAddress, farmDirectionsHref } from "@/lib/site";
+import {
+  contactEmail,
+  contactPhone,
+  displayPhone,
+  farmAddress,
+  farmDirectionsHref,
+  farmHours,
+} from "@/lib/site";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -40,18 +47,14 @@ export function Footer() {
 
   return (
     <footer ref={footerRef} className="relative border-t border-border bg-deep">
-      {/* Grain texture */}
       <div className="absolute inset-0 noise-overlay opacity-50 pointer-events-none" />
-
-      {/* Amber glow at top */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-amber-accent/40 to-transparent" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
         <div
           ref={columnsRef}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12"
+          className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4"
         >
-          {/* Brand */}
           <div className="space-y-5">
             <Link href="/" className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-accent to-copper-accent text-deep">
@@ -61,22 +64,21 @@ export function Footer() {
                 Mega<span className="text-amber-accent">Gamer</span>Land
               </span>
             </Link>
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-[260px]">
+            <p className="max-w-[260px] text-sm leading-relaxed text-muted-foreground">
               North Bay Ontario&apos;s premier rusty pipe farm. Cultivating
               corrosion with care since the dawn of oxidation.
             </p>
           </div>
 
-          {/* Quick Links */}
           <div className="space-y-5">
-            <h3 className="text-xs font-semibold text-amber-accent uppercase tracking-[0.2em]">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-accent">
               Quick Links
             </h3>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/"
-                  className="text-muted-foreground hover:text-amber-accent transition-colors duration-300 text-sm"
+                  className="text-sm text-muted-foreground transition-colors duration-300 hover:text-amber-accent"
                 >
                   Home
                 </Link>
@@ -84,7 +86,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/store"
-                  className="text-muted-foreground hover:text-amber-accent transition-colors duration-300 text-sm"
+                  className="text-sm text-muted-foreground transition-colors duration-300 hover:text-amber-accent"
                 >
                   Store
                 </Link>
@@ -92,14 +94,13 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
           <div className="space-y-5">
-            <h3 className="text-xs font-semibold text-amber-accent uppercase tracking-[0.2em]">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-accent">
               Contact
             </h3>
             <ul className="space-y-3.5">
               <li className="flex items-start gap-3 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-amber-accent/60" />
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-accent/60" />
                 <a
                   href={farmDirectionsHref}
                   target="_blank"
@@ -110,42 +111,52 @@ export function Footer() {
                 </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4 mt-0.5 shrink-0 text-amber-accent/60" />
-                greg@megagamerland.ca
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-amber-accent/60" />
+                <a
+                  href={`mailto:${contactEmail}`}
+                  className="transition-colors duration-300 hover:text-amber-accent"
+                >
+                  {contactEmail}
+                </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4 mt-0.5 shrink-0 text-amber-accent/60" />
-                705-499-5396
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-amber-accent/60" />
+                <a
+                  href={`tel:${contactPhone}`}
+                  className="transition-colors duration-300 hover:text-amber-accent"
+                >
+                  {displayPhone}
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Hours */}
           <div className="space-y-5">
-            <h3 className="text-xs font-semibold text-amber-accent uppercase tracking-[0.2em]">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-accent">
               Farm Hours
             </h3>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <li className="flex justify-between">
-                <span>Mon – Fri</span>
-                <span className="text-foreground/70">8am – 6pm</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Saturday</span>
-                <span className="text-foreground/70">9am – 4pm</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Sunday</span>
-                <span className="text-foreground/40">Closed</span>
-              </li>
+              {farmHours.map((entry) => (
+                <li key={entry.label} className="flex justify-between">
+                  <span>{entry.label}</span>
+                  <span
+                    className={
+                      entry.opens && entry.closes
+                        ? "text-foreground/70"
+                        : "text-foreground/40"
+                    }
+                  >
+                    {entry.hoursLabel}
+                  </span>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        {/* Divider */}
         <div className="my-12 h-[1px] bg-gradient-to-r from-transparent via-border to-transparent" />
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground/60">
+        <div className="flex flex-col items-center justify-between gap-4 text-xs text-muted-foreground/60 sm:flex-row">
           <p>
             &copy; {new Date().getFullYear()} MegaGamerLand. All rights
             reserved.
