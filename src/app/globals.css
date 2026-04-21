@@ -372,3 +372,84 @@
   color: rgba(212, 148, 76, 0.15);
   pointer-events: none;
 }
+
+/* ─── Marquee Animation ─── */
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* ─── Spin Slow ─── */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+/* ─── Line Draw ─── */
+@keyframes line-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.animate-line-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: line-draw 2s ease forwards;
+}
+
+/* ─── Blob Morph ─── */
+@keyframes blob-morph {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+}
+.animate-blob-morph {
+  animation: blob-morph 8s ease-in-out infinite;
+}
+
+/* ─── Reveal Mask ─── */
+.reveal-mask {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* ─── Cursor Glow ─── */
+.cursor-glow {
+  pointer-events: none;
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,148,76,0.08) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  z-index: 9998;
+  transition: opacity 0.3s;
+}
+
+/* ─── Text Stroke ─── */
+.text-stroke {
+  -webkit-text-stroke: 1px rgba(212, 148, 76, 0.3);
+  color: transparent;
+}
+
+/* ─── Hide scrollbar but keep functionality ─── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
