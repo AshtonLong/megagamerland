@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { splitTextUnits } from "@/lib/text-split";
+import { prefersReducedMotion } from "@/lib/motion";
 
 interface RevealTextProps {
   children: string;
@@ -31,6 +32,15 @@ export function RevealText({
 
   useLayoutEffect(() => {
     if (!elRef.current) return;
+    if (prefersReducedMotion()) {
+      elRef.current
+        .querySelectorAll<HTMLElement>(".reveal-unit")
+        .forEach((unit) => {
+          unit.style.opacity = "1";
+          unit.style.transform = "none";
+        });
+      return;
+    }
     gsap.registerPlugin(ScrollTrigger);
 
     const el = elRef.current;

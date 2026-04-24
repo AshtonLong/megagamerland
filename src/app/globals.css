@@ -379,8 +379,11 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(-33.333333%);
   }
+}
+.marquee-track {
+  will-change: transform;
 }
 
 /* ─── Spin Slow ─── */
@@ -452,4 +455,188 @@
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ─── Cinematic Rust System ─── */
+.cinematic-hero {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 18% 30%, rgba(212, 148, 76, 0.12), transparent 32%),
+    linear-gradient(180deg, #090907 0%, #0e0b08 100%);
+}
+.hero-bg-image {
+  object-position: 58% 34%;
+}
+@media (max-width: 767px) {
+  .hero-bg-image {
+    object-position: 64% 38%;
+  }
+}
+
+.rust-vignette {
+  background:
+    radial-gradient(ellipse at center, transparent 28%, rgba(0, 0, 0, 0.34) 68%, rgba(0, 0, 0, 0.78) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.46), transparent 28%, rgba(0, 0, 0, 0.66));
+}
+
+.oxidized-metal {
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(212, 148, 76, 0.13) 0 1px, transparent 2px),
+    radial-gradient(circle at 72% 48%, rgba(196, 122, 90, 0.11) 0 1px, transparent 2px),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.035), transparent 22%, rgba(212, 148, 76, 0.045) 42%, transparent 58%, rgba(74, 103, 65, 0.045));
+  background-size: 58px 58px, 83px 83px, 100% 100%;
+  mix-blend-mode: screen;
+  opacity: 0.62;
+}
+
+.cinematic-kicker {
+  position: relative;
+  overflow: hidden;
+}
+.cinematic-kicker::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  animation: shimmer 4.8s ease-in-out infinite;
+}
+
+.rust-gradient-text {
+  color: transparent;
+  background:
+    linear-gradient(90deg, #f0bd73 0%, #d4944c 28%, #c47a5a 62%, #7f2c15 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow: 0 0 48px rgba(212, 148, 76, 0.16);
+}
+
+.rust-spread-mask {
+  position: relative;
+}
+.rust-spread-mask::after {
+  content: "";
+  position: absolute;
+  inset: -0.08em -0.04em;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 40%, rgba(212, 148, 76, 0.22), transparent 14%),
+    radial-gradient(circle at 68% 56%, rgba(127, 44, 21, 0.24), transparent 18%),
+    radial-gradient(circle at 88% 30%, rgba(240, 189, 115, 0.13), transparent 10%);
+  mix-blend-mode: screen;
+  opacity: 0.78;
+  filter: blur(4px);
+  clip-path: inset(0 100% 0 0);
+  animation: rust-spread 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards;
+}
+
+@keyframes rust-spread {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.cinematic-wipe {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 90px;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, rgba(212, 148, 76, 0.18), transparent 70%),
+    linear-gradient(90deg, transparent, rgba(212, 148, 76, 0.34), transparent);
+  mask-image: linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
+}
+
+.rust-image-mask {
+  position: relative;
+}
+.rust-image-mask::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 24% 22%, transparent 0 14%, rgba(212, 148, 76, 0.18) 15%, transparent 24%),
+    radial-gradient(circle at 80% 68%, transparent 0 18%, rgba(127, 44, 21, 0.24) 19%, transparent 31%);
+  mix-blend-mode: overlay;
+}
+
+.metallic-sheen {
+  background:
+    linear-gradient(115deg, transparent 0%, rgba(255, 245, 220, 0.08) 34%, rgba(212, 148, 76, 0.18) 45%, transparent 58%),
+    radial-gradient(circle at 70% 20%, rgba(255, 255, 255, 0.11), transparent 24%);
+  transform: translateX(-10%);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  mix-blend-mode: screen;
+}
+.group:hover .metallic-sheen,
+.metallic-sheen:hover {
+  transform: translateX(10%);
+}
+
+.rust-fill-button {
+  position: relative;
+  transition: color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.rust-fill-button::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background:
+    linear-gradient(105deg, #f0bd73 0%, #d4944c 28%, #c47a5a 52%, #8f3719 76%, #f0bd73 100%);
+  transform: translateX(-102%) skewX(-14deg);
+  transform-origin: left center;
+  transition: transform 0.62s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.rust-fill-button::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    linear-gradient(110deg, transparent 0%, rgba(255, 245, 220, 0.34) 44%, transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 54%);
+  opacity: 0;
+  transform: translateX(-70%);
+  transition: opacity 0.35s ease, transform 0.62s cubic-bezier(0.16, 1, 0.3, 1);
+  mix-blend-mode: soft-light;
+}
+.rust-fill-button:hover::before {
+  transform: translateX(0) skewX(0deg);
+}
+.rust-fill-button:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+.rust-fill-button:hover {
+  box-shadow: 0 18px 70px rgba(212, 148, 76, 0.24);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .hero-word,
+  .hero-support,
+  .reveal-unit,
+  .product-reveal,
+  .about-reveal,
+  .feature-reveal,
+  .testimonial-reveal,
+  .faq-reveal,
+  .cta-reveal,
+  .stat-shell {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    filter: none !important;
+  }
 }

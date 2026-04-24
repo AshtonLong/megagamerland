@@ -2,7 +2,8 @@
 
 import { useRef, useState, useCallback } from "react";
 import { gsap } from "gsap";
-import { Plus, Minus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { prefersReducedMotion } from "@/lib/motion";
 
 interface FAQItem {
   question: string;
@@ -29,6 +30,11 @@ function AccordionItem({
   const toggle = useCallback(() => {
     onToggle();
     if (!contentRef.current || !innerRef.current || !iconRef.current) return;
+    if (prefersReducedMotion()) {
+      contentRef.current.style.height = !isOpen ? "auto" : "0px";
+      contentRef.current.style.opacity = !isOpen ? "1" : "0";
+      return;
+    }
 
     if (!isOpen) {
       gsap.set(contentRef.current, { height: "auto" });

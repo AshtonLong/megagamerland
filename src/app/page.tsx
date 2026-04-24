@@ -53,8 +53,8 @@ const homeJsonLd = {
       url: absoluteUrl("/"),
       description: homeDescription,
       image: [
-        absoluteUrl("/assets/landing/hero.png"),
-        absoluteUrl("/assets/landing/rusty-pipe-fittings-on-weathered-wood.png"),
+        absoluteUrl("/assets/landing/hero.webp"),
+        absoluteUrl("/assets/landing/rusty-pipe-fittings-on-weathered-wood.webp"),
       ],
       logo: absoluteUrl("/icon.svg"),
       email: contactEmail,

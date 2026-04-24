@@ -1,5 +1,4 @@
-import { mergeProps } from "@base-ui/react/merge-props"
-import { useRender } from "@base-ui/react/use-render"
+import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
@@ -31,22 +30,34 @@ function Badge({
   className,
   variant = "default",
   render,
+  children,
   ...props
-}: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
-  return useRender({
-    defaultTagName: "span",
-    props: mergeProps<"span">(
-      {
-        className: cn(badgeVariants({ variant }), className),
-      },
-      props
-    ),
-    render,
-    state: {
-      slot: "badge",
-      variant,
-    },
-  })
+}: React.HTMLAttributes<HTMLSpanElement> &
+  VariantProps<typeof badgeVariants> & {
+    render?: React.ReactElement<{ className?: string }>
+  }) {
+  const badgeClassName = cn(badgeVariants({ variant }), className)
+
+  if (render) {
+    return React.cloneElement(render, {
+      ...props,
+      className: cn(badgeClassName, render.props.className),
+      children,
+      "data-slot": "badge",
+      "data-variant": variant,
+    } as React.HTMLAttributes<HTMLElement>)
+  }
+
+  return (
+    <span
+      data-slot="badge"
+      data-variant={variant}
+      className={badgeClassName}
+      {...props}
+    >
+      {children}
+    </span>
+  )
 }
 
 export { Badge, badgeVariants }

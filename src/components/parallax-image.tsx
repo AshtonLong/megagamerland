@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef } from "react";
 import Image from "next/image";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { prefersReducedMotion } from "@/lib/motion";
 
 interface ParallaxImageProps {
   src: string;
@@ -27,6 +28,7 @@ export function ParallaxImage({
 
   useLayoutEffect(() => {
     if (!containerRef.current || !imageRef.current) return;
+    if (prefersReducedMotion()) return;
     gsap.registerPlugin(ScrollTrigger);
     const container = containerRef.current;
     const image = imageRef.current;

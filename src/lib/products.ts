@@ -1,13 +1,13 @@
 const storeImages = [
-  "/assets/store/Textured surface of galvanized steel pipe.png",
-  "/assets/store/Rusted iron pipe with textured decay.png",
-  "/assets/store/Textured rust on metal pipe.png",
-  "/assets/store/Rusty pipe in earthy setting.png",
-  "/assets/store/Rusty pipe with peeling flakes.png",
-  "/assets/store/Rusty pipe in damp surroundings.png",
-  "/assets/store/Stages of rust on metal pipes.png",
-  "/assets/store/Aged metal pipe with rustic patina.png",
-  "/assets/store/Rusty pipe in garden bed.png",
+  "/assets/store/Textured surface of galvanized steel pipe.webp",
+  "/assets/store/Rusted iron pipe with textured decay.webp",
+  "/assets/store/Textured rust on metal pipe.webp",
+  "/assets/store/Rusty pipe in earthy setting.webp",
+  "/assets/store/Rusty pipe with peeling flakes.webp",
+  "/assets/store/Rusty pipe in damp surroundings.webp",
+  "/assets/store/Stages of rust on metal pipes.webp",
+  "/assets/store/Aged metal pipe with rustic patina.webp",
+  "/assets/store/Rusty pipe in garden bed.webp",
 ] as const;
 
 export const productCategories = [

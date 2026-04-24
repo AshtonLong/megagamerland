@@ -18,28 +18,27 @@ export function Marquee({
   pauseOnHover = true,
 }: MarqueeProps) {
   const animationDirection = direction === "left" ? "normal" : "reverse";
+  const animationStateClass = pauseOnHover
+    ? "hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]"
+    : "";
 
   return (
     <div
-      className={`flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] ${className}`}
+      className={`overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] ${className}`}
     >
       <div
-        className={`flex shrink-0 gap-8 ${pauseOnHover ? "hover:[animation-play-state:paused]" : ""}`}
+        className={`marquee-track flex w-max ${animationStateClass}`}
         style={{
           animation: `marquee-scroll ${speed}s linear infinite ${animationDirection}`,
         }}
       >
-        {children}
-        {children}
-      </div>
-      <div
-        className={`flex shrink-0 gap-8 ${pauseOnHover ? "hover:[animation-play-state:paused]" : ""}`}
-        style={{
-          animation: `marquee-scroll ${speed}s linear infinite ${animationDirection}`,
-        }}
-      >
-        {children}
-        {children}
+        <div className="flex shrink-0 gap-8 pr-8">{children}</div>
+        <div aria-hidden="true" className="flex shrink-0 gap-8 pr-8">
+          {children}
+        </div>
+        <div aria-hidden="true" className="flex shrink-0 gap-8 pr-8">
+          {children}
+        </div>
       </div>
     </div>
   );

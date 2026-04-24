@@ -12,8 +12,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1,
       images: [
-        absoluteUrl("/assets/landing/hero.png"),
-        absoluteUrl("/assets/landing/rusty-pipe-fittings-on-weathered-wood.png"),
+        absoluteUrl("/assets/landing/hero.webp"),
+        absoluteUrl("/assets/landing/rusty-pipe-fittings-on-weathered-wood.webp"),
       ],
     },
     {

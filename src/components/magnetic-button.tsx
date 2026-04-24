@@ -2,6 +2,7 @@
 
 import { useRef, useCallback } from "react";
 import { gsap } from "gsap";
+import { prefersReducedMotion } from "@/lib/motion";
 
 interface MagneticButtonProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export function MagneticButton({
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
+      if (prefersReducedMotion()) return;
       if (!ref.current) return;
       const rect = ref.current.getBoundingClientRect();
       const x = e.clientX - rect.left - rect.width / 2;
@@ -34,6 +36,7 @@ export function MagneticButton({
   );
 
   const handleMouseLeave = useCallback(() => {
+    if (prefersReducedMotion()) return;
     if (!ref.current) return;
     gsap.to(ref.current, {
       x: 0,

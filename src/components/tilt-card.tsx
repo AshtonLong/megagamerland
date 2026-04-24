@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, type ReactNode } from "react";
 import { gsap } from "gsap";
+import { prefersReducedMotion } from "@/lib/motion";
 
 interface TiltCardProps {
   children: ReactNode;
@@ -23,6 +24,7 @@ export function TiltCard({
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
+      if (prefersReducedMotion()) return;
       if (!cardRef.current || !glareRef.current) return;
       const rect = cardRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -55,6 +57,7 @@ export function TiltCard({
   );
 
   const handleMouseLeave = useCallback(() => {
+    if (prefersReducedMotion()) return;
     if (!cardRef.current || !glareRef.current) return;
     gsap.to(cardRef.current, {
       rotateX: 0,

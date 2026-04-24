@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useLayoutEffect, useRef } from "react";
+import { useEffect, useState, useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MagneticButton } from "@/components/magnetic-button";
-import { Menu, Wrench } from "lucide-react";
+import { Menu, Wrench, X } from "lucide-react";
+import { prefersReducedMotion } from "@/lib/motion";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -16,33 +16,60 @@ export function Navbar() {
   const logoRef = useRef<HTMLAnchorElement>(null);
   const linksRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
   useLayoutEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ delay: 0.3 });
-      if (logoRef.current) {
-        tl.fromTo(
-          logoRef.current,
-          { opacity: 0, x: -30 },
-          { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" },
-        );
-      }
-      if (linksRef.current) {
-        const links = linksRef.current.children;
-        tl.fromTo(
-          links,
-          { opacity: 0, y: -15 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            stagger: 0.1,
-            ease: "power3.out",
-          },
-          "-=0.4",
-        );
-      }
-    }, navRef);
+    let ctx: gsap.Context | undefined;
+
+    if (prefersReducedMotion()) {
+      logoRef.current?.style.setProperty("opacity", "1");
+      Array.from(linksRef.current?.children ?? []).forEach((link) => {
+        (link as HTMLElement).style.opacity = "1";
+      });
+    } else {
+      gsap.registerPlugin(ScrollTrigger);
+      ctx = gsap.context(() => {
+        const tl = gsap.timeline({ delay: 0.3 });
+        if (logoRef.current) {
+          tl.fromTo(
+            logoRef.current,
+            { opacity: 0, x: -30 },
+            { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" },
+          );
+        }
+        if (linksRef.current) {
+          const links = linksRef.current.children;
+          tl.fromTo(
+            links,
+            { opacity: 0, y: -15 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.6,
+              stagger: 0.1,
+              ease: "power3.out",
+            },
+            "-=0.4",
+          );
+        }
+      }, navRef);
+    }
 
     // Navbar bg on scroll
     const handleScroll = () => {
@@ -51,7 +78,7 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
-      ctx.revert();
+      ctx?.revert();
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
@@ -110,25 +137,43 @@ export function Navbar() {
         </div>
 
         {/* Mobile Nav */}
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger
-            className="md:hidden"
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-foreground hover:bg-white/5"
-              >
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            }
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="text-foreground hover:bg-white/5 md:hidden"
+          aria-expanded={open}
+          aria-controls="mobile-nav"
+          onClick={() => setOpen(true)}
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle menu</span>
+        </Button>
+      </div>
+
+      {open ? (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/10 supports-backdrop-filter:backdrop-blur-xs"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
           />
-          <SheetContent
-            side="right"
-            className="w-72 bg-elevated border-l border-border"
+          <div
+            id="mobile-nav"
+            className="absolute inset-y-0 right-0 flex h-full w-72 flex-col gap-4 border-l border-border bg-elevated bg-clip-padding text-sm text-popover-foreground shadow-lg"
           >
-            <nav className="flex flex-col gap-4 mt-8">
+            <Button
+              type="button"
+              variant="ghost"
+              className="absolute right-3 top-3"
+              size="icon-sm"
+              onClick={() => setOpen(false)}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+            <nav className="mt-8 flex flex-col gap-4">
               <Button
                 render={<Link href="/" />}
                 nativeButton={false}
@@ -156,9 +201,9 @@ export function Navbar() {
                 Shop Now
               </Button>
             </nav>
-          </SheetContent>
-        </Sheet>
-      </div>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }

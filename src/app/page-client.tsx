@@ -1,6 +1,7 @@
 "use client";
 
-import { useLayoutEffect, useRef, useEffect, useState, useCallback } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import type { ElementType, ReactNode, RefObject } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { gsap } from "gsap";
@@ -13,263 +14,289 @@ import { ParallaxImage } from "@/components/parallax-image";
 import { Counter } from "@/components/counter";
 import { TiltCard } from "@/components/tilt-card";
 import { SpotlightCard } from "@/components/spotlight-card";
-import { TextScramble } from "@/components/text-scramble";
 import { Marquee } from "@/components/marquee";
 import { RustParticles } from "@/components/rust-particles";
 import { FAQAccordion } from "@/components/faq-accordion";
+import { RevealText } from "@/components/reveal-text";
+import { prefersReducedMotion } from "@/lib/motion";
 import { homeFaqs } from "@/lib/site";
 import { products } from "@/lib/products";
 import { splitTextUnits } from "@/lib/text-split";
 import {
   ArrowRight,
-  Droplets,
-  Leaf,
-  Shield,
-  Truck,
-  Star,
+  Award,
   ChevronDown,
   ChevronRight,
-  Sprout,
-  Wind,
-  Award,
-  PackageOpen,
-  Sparkles,
+  Droplets,
+  Leaf,
   MoveRight,
+  PackageOpen,
+  Shield,
+  Sparkles,
+  Sprout,
+  Star,
+  Truck,
+  Wind,
 } from "lucide-react";
 
-/* ─── Image Assets ─── */
 const landingImages = {
   hero: {
-    src: "/assets/landing/hero.png",
+    src: "/assets/landing/hero.webp",
     alt: "Panoramic view of the MegaGamerLand rusty pipe farm at golden hour.",
   },
   harvestedPipe: {
-    src: "/assets/landing/rusty-pipe-with-fresh-potatoes.png",
+    src: "/assets/landing/rusty-pipe-with-fresh-potatoes.webp",
     alt: "Freshly harvested rusty pipe styled with fresh potatoes on a rustic surface.",
   },
   farmer: {
-    src: "/assets/landing/farmer-inspecting-rusty-pipes-at-dawn.png",
+    src: "/assets/landing/farmer-inspecting-rusty-pipes-at-dawn.webp",
     alt: "Farmer inspecting rows of rusty pipes at dawn in the field.",
   },
   sunrise: {
-    src: "/assets/landing/sunrise-over-megagamerland-pipe-fields.png",
+    src: "/assets/landing/sunrise-over-megagamerland-pipe-fields.webp",
     alt: "Sunrise over the MegaGamerLand pipe fields with morning mist.",
   },
   hands: {
-    src: "/assets/landing/rusted-pipe-in-worn-hands.png",
+    src: "/assets/landing/rusted-pipe-in-worn-hands.webp",
     alt: "Close-up of worn hands holding a rusted pipe with rich patina.",
   },
   fittings: {
-    src: "/assets/landing/rusty-pipe-fittings-on-weathered-wood.png",
+    src: "/assets/landing/rusty-pipe-fittings-on-weathered-wood.webp",
     alt: "Assortment of rusty pipe fittings arranged on weathered wood.",
   },
 } as const;
 
 const heroHeading = "The World's Most Beautiful Rust, Grown on a Farm";
 
-/* ═══════════════════════════════════
-   HERO SECTION — Cinematic with particles
-   ═══════════════════════════════════ */
+function useRevealTimeline(
+  sectionRef: RefObject<HTMLElement | null>,
+  selector: string,
+  start = "top 78%",
+) {
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    if (!section || prefersReducedMotion()) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        selector,
+        { autoAlpha: 0, y: 44, filter: "blur(12px)" },
+        {
+          autoAlpha: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: 0.9,
+          stagger: 0.12,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: section,
+            start,
+            toggleActions: "play none none none",
+          },
+        },
+      );
+    }, section);
+
+    return () => ctx.revert();
+  }, [sectionRef, selector, start]);
+}
+
+function Kicker({
+  icon: Icon,
+  children,
+}: {
+  icon?: ElementType;
+  children: ReactNode;
+}) {
+  return (
+    <Badge className="cinematic-kicker border-amber-accent/25 bg-amber-accent/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-accent shadow-[0_0_40px_rgba(212,148,76,0.08)] backdrop-blur-sm">
+      {Icon ? <Icon className="mr-2 h-3 w-3" /> : null}
+      {children}
+    </Badge>
+  );
+}
+
+function RustGradient({ children }: { children: ReactNode }) {
+  return (
+    <span className="rust-gradient-text rust-spread-mask">{children}</span>
+  );
+}
+
+function SectionWipe({ className = "" }: { className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`cinematic-wipe pointer-events-none ${className}`}
+    />
+  );
+}
+
+function HeroTitle() {
+  return (
+    <h1 className="max-w-4xl text-[clamp(3rem,6.6vw,6.75rem)] font-black leading-[0.94] tracking-normal text-foreground text-balance font-display">
+      {splitTextUnits(heroHeading, "words").map((word, index) =>
+        /^\s+$/.test(word) ? (
+          <span key={`space-${index}`}>{word}</span>
+        ) : (
+          <span
+            key={`${word}-${index}`}
+            className="inline-block overflow-hidden align-top"
+          >
+            <span className="hero-word inline-block translate-y-[120%] opacity-0">
+              {word}
+            </span>
+          </span>
+        ),
+      )}
+    </h1>
+  );
+}
+
 function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
-  const badgeRef = useRef<HTMLDivElement>(null);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const scrollProgressRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    if (!sectionRef.current) return;
+    const section = sectionRef.current;
+    if (!section) return;
+
+    if (prefersReducedMotion()) {
+      section.querySelectorAll<HTMLElement>(".hero-word").forEach((word) => {
+        word.style.opacity = "1";
+        word.style.transform = "none";
+      });
+      return;
+    }
+
     gsap.registerPlugin(ScrollTrigger);
-
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ delay: 0.3 });
+      const tl = gsap.timeline({ delay: 0.15 });
 
-      if (imageContainerRef.current) {
-        tl.fromTo(
-          imageContainerRef.current,
-          { scale: 1.3, opacity: 0 },
-          { scale: 1, opacity: 1, duration: 2, ease: "power3.out" },
-          0,
-        );
-      }
-
-      if (overlayRef.current) {
-        tl.fromTo(
-          overlayRef.current,
-          { opacity: 0 },
-          { opacity: 1, duration: 1.2, ease: "power2.out" },
-          0.2,
-        );
-      }
-
-      if (badgeRef.current) {
-        tl.fromTo(
-          badgeRef.current,
-          { opacity: 0, y: 30, scale: 0.9 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.7)" },
-          0.6,
-        );
-      }
-
-      if (headingRef.current) {
-        const heroWords =
-          headingRef.current.querySelectorAll<HTMLElement>(".hero-word");
-        tl.to(
-          heroWords,
+      tl.fromTo(
+        imageRef.current,
+        { scale: 1.2, autoAlpha: 0 },
+        { scale: 1, autoAlpha: 1, duration: 2.2, ease: "power3.out" },
+        0,
+      )
+        .to(
+          ".hero-word",
           {
             y: "0%",
             opacity: 1,
-            duration: 1,
-            stagger: 0.08,
+            duration: 1.05,
+            stagger: 0.055,
             ease: "power4.out",
           },
-          0.9,
-        );
-      }
-
-      if (subtitleRef.current) {
-        tl.fromTo(
-          subtitleRef.current,
-          { opacity: 0, y: 30, filter: "blur(10px)" },
-          { opacity: 1, y: 0, filter: "blur(0px)", duration: 1, ease: "power3.out" },
-          1.5,
-        );
-      }
-
-      if (ctaRef.current) {
-        tl.fromTo(
-          ctaRef.current.children,
-          { opacity: 0, y: 25, scale: 0.95 },
+          0.45,
+        )
+        .fromTo(
+          ".hero-support",
+          { autoAlpha: 0, y: 28, filter: "blur(12px)" },
           {
-            opacity: 1,
+            autoAlpha: 1,
             y: 0,
-            scale: 1,
-            duration: 0.7,
-            stagger: 0.15,
+            filter: "blur(0px)",
+            duration: 0.9,
+            stagger: 0.13,
             ease: "power3.out",
           },
-          1.9,
+          1.05,
         );
-      }
 
-      if (imageContainerRef.current && sectionRef.current) {
-        gsap.to(imageContainerRef.current, {
-          y: 150,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top top",
-            end: "bottom top",
-            scrub: true,
-          },
-        });
-      }
-    }, sectionRef);
+      gsap.to(imageRef.current, {
+        yPercent: 14,
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
 
-    return () => {
-      ctx.revert();
-    };
+      gsap.to(".depth-layer", {
+        y: (index) => [90, 150, 220][index] ?? 100,
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+
+      gsap.to(scrollProgressRef.current, {
+        scaleY: 1,
+        transformOrigin: "top",
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+    }, section);
+
+    return () => ctx.revert();
   }, []);
 
   return (
     <section
       ref={sectionRef}
-      className="relative h-screen min-h-[700px] max-h-[1200px] overflow-hidden flex items-center"
+      className="cinematic-hero relative flex min-h-[calc(100svh-4.5rem)] items-center overflow-hidden"
     >
-      {/* Background image */}
-      <div ref={imageContainerRef} className="absolute inset-0 opacity-0">
+      <div ref={imageRef} className="absolute inset-0 opacity-0">
         <Image
           src={landingImages.hero.src}
           alt={landingImages.hero.alt}
           fill
           priority
           sizes="100vw"
-          className="object-cover"
+          className="hero-bg-image object-cover"
         />
       </div>
 
-      {/* Overlays */}
+      <div className="depth-layer absolute inset-x-0 bottom-[-18%] h-[42%] bg-[radial-gradient(ellipse_at_center,rgba(196,122,90,0.22),transparent_58%)] blur-3xl" />
+      <div className="depth-layer absolute left-[-12%] top-[10%] h-[44rem] w-[44rem] rounded-full bg-rust-800/15 blur-[130px]" />
+      <div className="depth-layer absolute right-[-10%] top-[18%] h-[34rem] w-[34rem] rounded-full bg-amber-accent/10 blur-[120px]" />
+
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,#070704_0%,rgba(7,7,4,0.9)_28%,rgba(7,7,4,0.42)_62%,rgba(7,7,4,0.18)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,transparent_0%,rgba(5,5,4,0.28)_36%,#070704_100%)]" />
+      <div className="absolute inset-0 rust-vignette" />
+      <div className="absolute inset-0 noise-overlay opacity-50" />
+
+      <RustParticles className="z-10 opacity-80" particleCount={70} />
+
       <div
-        ref={overlayRef}
-        className="absolute inset-0 bg-gradient-to-r from-deep/95 via-deep/80 to-deep/40 opacity-0"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-deep via-transparent to-deep/30" />
-
-      {/* Noise */}
-      <div className="absolute inset-0 noise-overlay opacity-40" />
-
-      {/* Ambient glow orbs */}
-      <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full bg-amber-accent/5 blur-[140px] animate-pulse-glow" />
-      <div
-        className="absolute bottom-1/3 left-1/6 w-[400px] h-[400px] rounded-full bg-copper-accent/5 blur-[120px] animate-pulse-glow"
-        style={{ animationDelay: "2s" }}
-      />
-
-      {/* Rust particles canvas */}
-      <RustParticles className="z-10" particleCount={50} />
-
-      {/* Content */}
-      <div className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
-        <div className="max-w-3xl space-y-8">
-          <div ref={badgeRef} className="opacity-0">
-            <Badge className="border-amber-accent/30 bg-amber-accent/10 px-4 py-1.5 text-xs font-medium text-amber-accent backdrop-blur-sm">
-              <Sparkles className="mr-1.5 h-3 w-3" />
-              North Bay&apos;s Finest Since 1998
-            </Badge>
+        ref={contentRef}
+        className="relative z-20 mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8"
+      >
+        <div className="space-y-6 sm:space-y-7">
+          <div className="hero-support opacity-0">
+            <Kicker icon={Sparkles}>North Bay&apos;s Finest Since 1998</Kicker>
           </div>
-
-          <h1
-            ref={headingRef}
-            className="text-5xl font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl font-display text-foreground"
-          >
-            {splitTextUnits(heroHeading, "words").map((word, index) =>
-              /^\s+$/.test(word) ? (
-                <span key={`space-${index}`}>{word}</span>
-              ) : (
-                <span
-                  key={`${word}-${index}`}
-                  style={{
-                    display: "inline-block",
-                    overflow: "hidden",
-                    verticalAlign: "top",
-                  }}
-                >
-                  <span
-                    className="hero-word"
-                    style={{
-                      display: "inline-block",
-                      transform: "translateY(120%)",
-                      opacity: 0,
-                    }}
-                  >
-                    {word}
-                  </span>
-                </span>
-              ),
-            )}
-          </h1>
-
-          <p
-            ref={subtitleRef}
-            className="max-w-xl text-lg leading-relaxed text-muted-foreground opacity-0"
-          >
+          <HeroTitle />
+          <p className="hero-support max-w-2xl text-base leading-7 text-earth-100/78 opacity-0 sm:text-lg sm:leading-8">
             At MegaGamerLand, we don&apos;t just sell rusty pipes. We cultivate
             them. Nestled in the heart of North Bay, Ontario, our farm produces
             the most exquisite oxidized iron specimens nature can provide.
           </p>
-
-          <div ref={ctaRef} className="flex flex-wrap gap-5">
+          <div className="hero-support flex flex-wrap items-center gap-4 opacity-0">
             <MagneticButton>
               <Button
                 render={<Link href="/store" />}
                 nativeButton={false}
                 size="lg"
-                className="h-14 bg-gradient-to-r from-amber-accent to-copper-accent px-10 text-base font-semibold text-deep hover:shadow-xl hover:shadow-amber-accent/20 transition-all duration-300 border-0 rounded-full"
+                className="rust-fill-button h-14 overflow-hidden rounded-full border border-amber-accent/30 bg-amber-accent px-9 text-base font-bold text-deep shadow-[0_20px_80px_rgba(212,148,76,0.2)]"
               >
-                Browse the Farm
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <span className="relative z-10 flex items-center">
+                  Browse the Farm
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </span>
               </Button>
             </MagneticButton>
             <MagneticButton>
@@ -278,7 +305,7 @@ function HeroSection() {
                 nativeButton={false}
                 variant="outline"
                 size="lg"
-                className="h-14 border-foreground/20 px-10 text-base text-foreground hover:bg-white/5 hover:border-amber-accent/30 transition-all duration-300 rounded-full"
+                className="h-14 rounded-full border-earth-100/20 bg-black/15 px-9 text-base text-earth-100 backdrop-blur-md transition-all duration-300 hover:border-amber-accent/50 hover:bg-white/8"
               >
                 Our Story
               </Button>
@@ -287,51 +314,23 @@ function HeroSection() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-20">
-        <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground/50">
-          Scroll
-        </span>
-        <ChevronDown className="h-4 w-4 text-amber-accent/50 animate-scroll-hint" />
+      <div className="absolute bottom-7 left-1/2 z-20 flex -translate-x-1/2 items-center gap-4 text-earth-100/55">
+        <span className="text-[10px] uppercase tracking-[0.34em]">Scroll</span>
+        <div className="h-16 w-px overflow-hidden rounded-full bg-earth-100/15">
+          <div
+            ref={scrollProgressRef}
+            className="h-full w-full origin-top scale-y-0 bg-gradient-to-b from-amber-accent to-copper-accent"
+          />
+        </div>
+        <ChevronDown className="h-4 w-4 animate-scroll-hint text-amber-accent/70" />
       </div>
     </section>
   );
 }
 
-/* ═══════════════════════════════════
-   STATS BAR — Animated counters with progress rings
-   ═══════════════════════════════════ */
 function StatsBar() {
   const sectionRef = useRef<HTMLElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (!sectionRef.current || !statsRef.current) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        statsRef.current!.children,
-        { opacity: 0, y: 40, scale: 0.95 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.8,
-          stagger: 0.12,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 85%",
-            toggleActions: "play none none none",
-          },
-        },
-      );
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, []);
+  useRevealTimeline(sectionRef, ".stat-shell");
 
   const stats = [
     { end: 25, suffix: "+", label: "Years of Rust" },
@@ -341,182 +340,116 @@ function StatsBar() {
   ];
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative border-y border-border bg-elevated/30"
-    >
-      <div className="absolute inset-0 noise-overlay opacity-30" />
-      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div ref={statsRef} className="grid grid-cols-2 gap-10 md:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center space-y-3 group">
-              <div className="relative inline-flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-amber-accent/5 scale-150 group-hover:scale-[1.7] transition-transform duration-500" />
-                <Counter
-                  end={stat.end}
-                  suffix={stat.suffix}
-                  className="relative text-5xl font-black text-amber-accent font-display sm:text-6xl"
-                />
-              </div>
-              <p className="text-sm text-muted-foreground tracking-wide uppercase">
-                {stat.label}
-              </p>
-            </div>
-          ))}
-        </div>
+    <section ref={sectionRef} className="relative overflow-hidden border-y border-amber-accent/10 bg-[#0f0d09]">
+      <div className="absolute inset-0 oxidized-metal" />
+      <div className="relative mx-auto grid max-w-7xl grid-cols-2 gap-px px-4 py-3 sm:px-6 md:grid-cols-4 lg:px-8">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="stat-shell group relative min-h-44 overflow-hidden border border-white/[0.04] bg-black/18 p-6 opacity-100 backdrop-blur-sm"
+          >
+            <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-amber-accent/40 to-transparent" />
+            <Counter
+              end={stat.end}
+              suffix={stat.suffix}
+              className="font-display text-5xl font-black text-amber-accent sm:text-6xl"
+            />
+            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-earth-100/55">
+              {stat.label}
+            </p>
+            <div className="absolute -bottom-12 -right-10 h-32 w-32 rounded-full bg-copper-accent/10 blur-3xl transition-transform duration-700 group-hover:scale-150" />
+          </div>
+        ))}
       </div>
     </section>
   );
 }
 
-/* ═══════════════════════════════════
-   FEATURED PRODUCTS — 3D Tilt Cards
-   ═══════════════════════════════════ */
 function FeaturedProductsSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
-
+  useRevealTimeline(sectionRef, ".product-reveal");
   const featuredProducts = products.slice(0, 4);
 
-  useLayoutEffect(() => {
-    if (!sectionRef.current) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      if (headerRef.current) {
-        gsap.fromTo(
-          headerRef.current.children,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            stagger: 0.1,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: headerRef.current,
-              start: "top 85%",
-              toggleActions: "play none none none",
-            },
-          },
-        );
-      }
-
-      if (cardsRef.current) {
-        gsap.fromTo(
-          cardsRef.current.children,
-          { opacity: 0, y: 60, rotateX: 15 },
-          {
-            opacity: 1,
-            y: 0,
-            rotateX: 0,
-            duration: 0.9,
-            stagger: 0.15,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: cardsRef.current,
-              start: "top 85%",
-              toggleActions: "play none none none",
-            },
-          },
-        );
-      }
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, []);
-
   return (
-    <section ref={sectionRef} className="py-28 sm:py-36 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-deep via-elevated/20 to-deep" />
-      <div className="absolute inset-0 noise-overlay opacity-20" />
+    <section ref={sectionRef} className="relative overflow-hidden py-28 sm:py-36">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#090907_0%,#14100b_45%,#090907_100%)]" />
+      <div className="absolute inset-0 noise-overlay opacity-30" />
+      <SectionWipe />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div ref={headerRef} className="mx-auto mb-16 max-w-2xl text-center">
-          <Badge className="mb-5 border-amber-accent/30 bg-amber-accent/10 text-amber-accent">
-            <PackageOpen className="mr-1.5 h-3 w-3" />
-            Featured Collection
-          </Badge>
-          <h2 className="text-4xl font-black tracking-tight sm:text-5xl font-display leading-[1.1]">
-            Pipes Worthy of{" "}
-            <span className="bg-gradient-to-r from-amber-accent to-copper-accent bg-clip-text text-transparent">
-              Your Collection
-            </span>
+        <div className="product-reveal mx-auto mb-16 max-w-3xl text-center">
+          <Kicker icon={PackageOpen}>Featured Collection</Kicker>
+          <h2 className="mt-6 text-4xl font-black leading-[1] tracking-normal text-balance font-display sm:text-6xl">
+            Pipes Worthy of <RustGradient>Your Collection</RustGradient>
           </h2>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
             Hand-selected from our finest harvests. Each piece tells a unique
             story of oxidation and time.
           </p>
         </div>
 
-        <div
-          ref={cardsRef}
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
-          style={{ perspective: "1000px" }}
-        >
-          {featuredProducts.map((product) => (
-            <TiltCard
-              key={product.id}
-              className="rounded-2xl"
-              tiltAmount={8}
-              glareOpacity={0.12}
-            >
-              <Link href="/store" className="block">
-                <Card className="group bg-elevated/60 border-border/50 backdrop-blur-sm h-full overflow-hidden card-hover">
-                  <div className="relative aspect-square overflow-hidden">
-                    <Image
-                      src={product.imageSrc}
-                      alt={product.imageAlt}
-                      fill
-                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-elevated via-transparent to-transparent opacity-60" />
-                    {product.badge && (
-                      <Badge
-                        className={`absolute top-3 left-3 ${product.badgeColor} backdrop-blur-sm`}
-                      >
-                        {product.badge}
-                      </Badge>
-                    )}
-                  </div>
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold font-display text-foreground">
-                        {product.name}
-                      </h3>
-                      <span className="text-amber-accent font-semibold">
-                        ${product.price}
-                      </span>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" style={{ perspective: "1200px" }}>
+          {featuredProducts.map((product, index) => (
+            <div key={product.id} className="product-reveal">
+              <TiltCard className="rounded-lg" tiltAmount={7} glareOpacity={0.15}>
+                <Link href="/store" className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-accent">
+                  <Card className="relative h-full overflow-hidden rounded-lg border-white/[0.08] bg-[#15120d]/80 shadow-2xl shadow-black/35 backdrop-blur-sm transition-colors duration-500 group-hover:border-amber-accent/30">
+                    <div className="relative aspect-[4/5] overflow-hidden">
+                      <Image
+                        src={product.imageSrc}
+                        alt={product.imageAlt}
+                        fill
+                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 metallic-sheen opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#090907] via-[#090907]/10 to-transparent" />
+                      <div className="absolute left-4 top-4 rounded-full border border-white/10 bg-black/35 px-3 py-1 text-xs font-semibold text-earth-100/75 backdrop-blur-md">
+                        0{index + 1}
+                      </div>
+                      {product.badge && (
+                        <Badge className={`absolute right-4 top-4 ${product.badgeColor} backdrop-blur-sm`}>
+                          {product.badge}
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {product.description}
-                    </p>
-                    <div className="flex items-center gap-1.5">
-                      <Star className="h-3.5 w-3.5 fill-amber-accent text-amber-accent" />
-                      <span className="text-sm text-foreground/80">
-                        {product.rating}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({product.reviews} reviews)
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </TiltCard>
+                    <CardContent className="space-y-4 p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <h3 className="font-display text-xl font-bold leading-tight text-foreground">
+                          {product.name}
+                        </h3>
+                        <span className="font-display text-xl font-black text-amber-accent">
+                          ${product.price}
+                        </span>
+                      </div>
+                      <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
+                        {product.description}
+                      </p>
+                      <div className="flex items-center justify-between border-t border-white/[0.06] pt-4">
+                        <div className="flex items-center gap-1.5">
+                          <Star className="h-3.5 w-3.5 fill-amber-accent text-amber-accent" />
+                          <span className="text-sm text-foreground/85">{product.rating}</span>
+                          <span className="text-xs text-muted-foreground">({product.reviews})</span>
+                        </div>
+                        <span className="text-[10px] uppercase tracking-[0.22em] text-copper-accent">
+                          Patina details
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </TiltCard>
+            </div>
           ))}
         </div>
 
-        <div className="mt-12 text-center">
+        <div className="product-reveal mt-12 text-center">
           <MagneticButton>
             <Button
               render={<Link href="/store" />}
               nativeButton={false}
               variant="outline"
-              className="h-12 px-8 border-amber-accent/20 text-amber-accent hover:bg-amber-accent/10 hover:border-amber-accent/40 transition-all duration-300 rounded-full"
+              className="h-12 rounded-full border-amber-accent/25 bg-black/20 px-8 text-amber-accent backdrop-blur-md transition-all duration-300 hover:border-amber-accent/50 hover:bg-amber-accent/10"
             >
               View All Products
               <MoveRight className="ml-2 h-4 w-4" />
@@ -528,115 +461,88 @@ function FeaturedProductsSection() {
   );
 }
 
-/* ═══════════════════════════════════
-   ABOUT SECTION — Parallax image grid with text scramble
-   ═══════════════════════════════════ */
 function AboutSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (!sectionRef.current || !textRef.current) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        textRef.current!.children,
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.9,
-          stagger: 0.15,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 70%",
-            toggleActions: "play none none none",
-          },
-        },
-      );
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, []);
+  useRevealTimeline(sectionRef, ".about-reveal", "top 72%");
 
   return (
-    <section id="about" ref={sectionRef} className="py-28 sm:py-36 relative">
-      <div className="absolute inset-0 noise-overlay opacity-20" />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-20 lg:grid-cols-2">
-          {/* Image grid with parallax */}
-          <div className="grid grid-cols-2 gap-5">
-            <div className="space-y-5">
-              <ParallaxImage
-                src={landingImages.harvestedPipe.src}
-                alt={landingImages.harvestedPipe.alt}
-                className="aspect-[3/4] rounded-2xl ring-1 ring-white/5"
-                sizes="(min-width: 1024px) 22vw, 44vw"
-                speed={0.2}
-              />
-              <ParallaxImage
-                src={landingImages.farmer.src}
-                alt={landingImages.farmer.alt}
-                className="aspect-square rounded-2xl ring-1 ring-white/5"
-                sizes="(min-width: 1024px) 18vw, 44vw"
-                speed={0.15}
-              />
-            </div>
-            <div className="space-y-5 pt-12">
-              <ParallaxImage
-                src={landingImages.sunrise.src}
-                alt={landingImages.sunrise.alt}
-                className="aspect-square rounded-2xl ring-1 ring-white/5"
-                sizes="(min-width: 1024px) 18vw, 44vw"
-                speed={0.25}
-              />
-              <ParallaxImage
-                src={landingImages.hands.src}
-                alt={landingImages.hands.alt}
-                className="aspect-[3/4] rounded-2xl ring-1 ring-white/5"
-                sizes="(min-width: 1024px) 22vw, 44vw"
-                speed={0.1}
-              />
-            </div>
-          </div>
+    <section id="about" ref={sectionRef} className="relative overflow-hidden py-28 sm:py-40">
+      <div className="absolute inset-0 bg-[#090907]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_30%,rgba(212,148,76,0.1),transparent_34%),radial-gradient(circle_at_78%_52%,rgba(74,103,65,0.11),transparent_30%)]" />
+      <div className="absolute inset-0 noise-overlay opacity-25" />
 
-          <div ref={textRef} className="space-y-7">
-            <Badge className="border-amber-accent/30 bg-amber-accent/10 text-amber-accent">
-              <Sprout className="mr-1.5 h-3 w-3" />
-              Our Story
-            </Badge>
-            <h2 className="text-4xl font-black tracking-tight sm:text-5xl font-display leading-[1.1]">
-              Born from the Earth,{" "}
-              <span className="bg-gradient-to-r from-amber-accent to-copper-accent bg-clip-text text-transparent">
-                <TextScramble text="Shaped by Time" />
-              </span>
-            </h2>
-            <p className="leading-relaxed text-muted-foreground text-lg">
-              It all started in 1998 when our founder noticed something
-              beautiful: a forgotten pipe, left in the rain, transforming into a
-              work of art. That moment of accidental oxidation sparked a
-              revolution. Today, MegaGamerLand is a 50-acre farm dedicated to
-              the art and science of growing the world&apos;s finest rusty
-              pipes.
-            </p>
-            <p className="leading-relaxed text-muted-foreground">
-              Our unique soil composition, combined with North Bay&apos;s
-              perfect humidity and seasonal freeze-thaw cycles, creates rust
-              conditions that simply can&apos;t be replicated anywhere else on
-              Earth. Every pipe we sell is 100% farm-grown, naturally oxidized,
-              and hand-selected for quality.
-            </p>
+      <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+        <div className="about-reveal grid grid-cols-2 gap-4 sm:gap-5">
+          <div className="space-y-4 sm:space-y-5">
+            <ParallaxImage
+              src={landingImages.harvestedPipe.src}
+              alt={landingImages.harvestedPipe.alt}
+              className="rust-image-mask aspect-[3/4] rounded-lg ring-1 ring-white/10"
+              sizes="(min-width: 1024px) 24vw, 50vw"
+              speed={0.22}
+            />
+            <ParallaxImage
+              src={landingImages.farmer.src}
+              alt={landingImages.farmer.alt}
+              className="aspect-square rounded-lg ring-1 ring-white/10"
+              sizes="(min-width: 1024px) 21vw, 50vw"
+              speed={0.14}
+            />
+          </div>
+          <div className="space-y-4 pt-12 sm:space-y-5">
+            <ParallaxImage
+              src={landingImages.sunrise.src}
+              alt={landingImages.sunrise.alt}
+              className="aspect-square rounded-lg ring-1 ring-white/10"
+              sizes="(min-width: 1024px) 21vw, 50vw"
+              speed={0.28}
+            />
+            <ParallaxImage
+              src={landingImages.hands.src}
+              alt={landingImages.hands.alt}
+              className="rust-image-mask aspect-[3/4] rounded-lg ring-1 ring-white/10"
+              sizes="(min-width: 1024px) 24vw, 50vw"
+              speed={0.12}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-7">
+          <div className="about-reveal">
+            <Kicker icon={Sprout}>Our Story</Kicker>
+          </div>
+          <RevealText
+            as="h2"
+            splitBy="words"
+            className="about-reveal text-4xl font-black leading-[1.02] tracking-normal text-balance font-display sm:text-6xl"
+          >
+            Born from the Earth, Shaped by Time
+          </RevealText>
+          <p className="about-reveal text-lg leading-8 text-muted-foreground">
+            It all started in 1998 when our founder noticed something
+            beautiful: a forgotten pipe, left in the rain, transforming into a
+            work of art. That moment of accidental oxidation sparked a
+            revolution. Today, MegaGamerLand is a 50-acre farm dedicated to the
+            art and science of growing the world&apos;s finest rusty pipes.
+          </p>
+          <p className="about-reveal leading-7 text-muted-foreground">
+            Our unique soil composition, combined with North Bay&apos;s perfect
+            humidity and seasonal freeze-thaw cycles, creates rust conditions
+            that simply can&apos;t be replicated anywhere else on Earth. Every
+            pipe we sell is 100% farm-grown, naturally oxidized, and
+            hand-selected for quality.
+          </p>
+          <div className="about-reveal">
             <MagneticButton>
               <Button
                 render={<Link href="/store" />}
                 nativeButton={false}
-                className="mt-2 bg-gradient-to-r from-amber-accent to-copper-accent text-deep font-semibold hover:shadow-lg hover:shadow-amber-accent/20 transition-all duration-300 border-0 rounded-full px-8"
+                className="rust-fill-button mt-2 h-12 overflow-hidden rounded-full border-0 bg-amber-accent px-8 font-semibold text-deep"
               >
-                See Our Pipes
-                <ChevronRight className="ml-1 h-4 w-4" />
+                <span className="relative z-10 flex items-center">
+                  See Our Pipes
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </span>
               </Button>
             </MagneticButton>
           </div>
@@ -646,13 +552,9 @@ function AboutSection() {
   );
 }
 
-/* ═══════════════════════════════════
-   PROCESS SECTION — Step by step with animated lines
-   ═══════════════════════════════════ */
 function ProcessSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const stepsRef = useRef<HTMLDivElement>(null);
+  const [activeStep, setActiveStep] = useState(0);
 
   const steps = [
     {
@@ -660,147 +562,155 @@ function ProcessSection() {
       title: "Plant",
       description:
         "Fresh iron pipes are carefully placed in our nutrient-rich North Bay soil, positioned for optimal sun and rain exposure.",
+      image: landingImages.farmer,
     },
     {
       icon: Droplets,
       title: "Nurture",
       description:
         "Ontario's natural rainfall and our controlled irrigation system begin the oxidation process, layer by delicate layer.",
+      image: landingImages.sunrise,
     },
     {
       icon: Wind,
       title: "Weather",
       description:
         "Seasonal freeze-thaw cycles create micro-cracking and deep patina patterns that no factory can replicate.",
+      image: landingImages.hands,
     },
     {
       icon: Award,
       title: "Select",
       description:
         "Each pipe is hand-inspected for rust depth, color consistency, and structural character before earning our seal.",
+      image: landingImages.fittings,
     },
   ];
 
   useLayoutEffect(() => {
-    if (!sectionRef.current) return;
+    const section = sectionRef.current;
+    if (!section || prefersReducedMotion()) return;
+
     gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
-      if (headerRef.current) {
-        gsap.fromTo(
-          headerRef.current.children,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            stagger: 0.1,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: headerRef.current,
-              start: "top 85%",
-              toggleActions: "play none none none",
-            },
-          },
-        );
-      }
+      const stepEls = gsap.utils.toArray<HTMLElement>(".process-step");
+      stepEls.forEach((step, index) => {
+        ScrollTrigger.create({
+          trigger: step,
+          start: "top center",
+          end: "bottom center",
+          onEnter: () => setActiveStep(index),
+          onEnterBack: () => setActiveStep(index),
+        });
+      });
 
-      if (stepsRef.current) {
-        const stepEls = stepsRef.current.children;
-        gsap.fromTo(
-          stepEls,
-          { opacity: 0, y: 50, scale: 0.95 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.8,
-            stagger: 0.2,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: stepsRef.current,
-              start: "top 80%",
-              toggleActions: "play none none none",
-            },
+      gsap.fromTo(
+        ".process-rail-fill",
+        { scaleY: 0 },
+        {
+          scaleY: 1,
+          transformOrigin: "top",
+          ease: "none",
+          scrollTrigger: {
+            trigger: section,
+            start: "top center",
+            end: "bottom center",
+            scrub: true,
           },
-        );
-      }
-    }, sectionRef);
+        },
+      );
+    }, section);
 
-    return () => {
-      ctx.revert();
-    };
+    return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-28 sm:py-36 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-elevated/20 via-deep to-elevated/20" />
-      <div className="absolute inset-0 noise-overlay opacity-20" />
-
-      {/* Decorative blob */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-amber-accent/3 blur-[150px] animate-blob-morph" />
+    <section ref={sectionRef} className="relative overflow-visible bg-[#0a0907] py-28 sm:py-36">
+      <SectionWipe className="top-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(212,148,76,0.12),transparent_38%)]" />
+      <div className="absolute inset-0 noise-overlay opacity-25" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div ref={headerRef} className="mx-auto mb-20 max-w-2xl text-center">
-          <Badge className="mb-5 border-amber-accent/30 bg-amber-accent/10 text-amber-accent">
-            <Wind className="mr-1.5 h-3 w-3" />
-            The Process
-          </Badge>
-          <h2 className="text-4xl font-black tracking-tight sm:text-5xl font-display leading-[1.1]">
-            From Soil to{" "}
-            <span className="bg-gradient-to-r from-amber-accent to-copper-accent bg-clip-text text-transparent">
-              Showcase
-            </span>
+        <div className="mx-auto mb-20 max-w-3xl text-center">
+          <Kicker icon={Wind}>The Process</Kicker>
+          <h2 className="mt-6 text-4xl font-black leading-[1] tracking-normal text-balance font-display sm:text-6xl">
+            From Soil to <RustGradient>Showcase</RustGradient>
           </h2>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            Four stages of natural artistry. No shortcuts, no chemicals — just
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+            Four stages of natural artistry. No shortcuts, no chemicals - just
             time and the elements.
           </p>
         </div>
 
-        <div
-          ref={stepsRef}
-          className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          {steps.map((step, index) => (
-            <div key={step.title} className="relative group">
-              {/* Connector line */}
-              {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-12 left-[60%] w-[80%] h-[1px]">
-                  <div className="absolute inset-0 bg-gradient-to-r from-amber-accent/30 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-amber-accent/50 to-transparent animate-shimmer" />
-                </div>
-              )}
-
-              <div className="relative space-y-5 text-center">
-                <div className="relative inline-flex">
-                  <div className="absolute inset-0 rounded-2xl bg-amber-accent/10 blur-xl group-hover:bg-amber-accent/20 transition-colors duration-500" />
-                  <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl bg-elevated/80 border border-border/50 group-hover:border-amber-accent/30 transition-all duration-500">
-                    <step.icon className="h-10 w-10 text-amber-accent transition-transform duration-500 group-hover:scale-110" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-amber-accent text-deep text-xs font-bold">
-                    {index + 1}
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold font-display">{step.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {step.description}
+        <div className="grid gap-12 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="top-28 h-fit lg:sticky">
+            <div className="relative overflow-hidden rounded-lg border border-white/[0.08] bg-black/25 shadow-2xl shadow-black/40">
+              {steps.map((step, index) => (
+                <Image
+                  key={step.title}
+                  src={step.image.src}
+                  alt={step.image.alt}
+                  width={900}
+                  height={1000}
+                  sizes="(min-width: 1024px) 45vw, 100vw"
+                  className={`aspect-[4/5] w-full object-cover transition-all duration-700 ${
+                    activeStep === index
+                      ? "relative opacity-100 blur-0"
+                      : "absolute inset-0 opacity-0 blur-md"
+                  }`}
+                />
+              ))}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#080705] via-transparent to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6">
+                <p className="text-[10px] uppercase tracking-[0.28em] text-amber-accent/80">
+                  Stage 0{activeStep + 1}
+                </p>
+                <p className="mt-2 font-display text-3xl font-black">
+                  {steps[activeStep].title}
                 </p>
               </div>
             </div>
-          ))}
+          </div>
+
+          <div className="relative">
+            <div className="absolute left-6 top-0 hidden h-full w-px bg-white/10 sm:block">
+              <div className="process-rail-fill h-full w-full origin-top scale-y-0 bg-gradient-to-b from-amber-accent via-copper-accent to-transparent" />
+            </div>
+            <div className="space-y-8 sm:pl-20">
+              {steps.map((step, index) => (
+                <article
+                  key={step.title}
+                  className={`process-step relative min-h-[42vh] rounded-lg border p-7 transition-all duration-500 ${
+                    activeStep === index
+                      ? "border-amber-accent/30 bg-amber-accent/[0.07]"
+                      : "border-white/[0.07] bg-white/[0.025]"
+                  }`}
+                >
+                  <div className="absolute -left-[4.65rem] top-8 hidden h-12 w-12 items-center justify-center rounded-full border border-amber-accent/25 bg-[#0a0907] text-amber-accent shadow-[0_0_30px_rgba(212,148,76,0.16)] sm:flex">
+                    <step.icon className="h-5 w-5" />
+                  </div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-copper-accent">
+                    0{index + 1}
+                  </p>
+                  <h3 className="mt-4 font-display text-4xl font-black">
+                    {step.title}
+                  </h3>
+                  <p className="mt-5 max-w-xl text-lg leading-8 text-muted-foreground">
+                    {step.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* ═══════════════════════════════════
-   FEATURES SECTION — Spotlight cards
-   ═══════════════════════════════════ */
 function FeaturesSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
+  useRevealTimeline(sectionRef, ".feature-reveal");
 
   const features = [
     {
@@ -829,102 +739,42 @@ function FeaturesSection() {
     },
   ];
 
-  useLayoutEffect(() => {
-    if (!sectionRef.current) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      if (headerRef.current) {
-        gsap.fromTo(
-          headerRef.current.children,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            stagger: 0.1,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: headerRef.current,
-              start: "top 85%",
-              toggleActions: "play none none none",
-            },
-          },
-        );
-      }
-
-      if (cardsRef.current) {
-        gsap.fromTo(
-          cardsRef.current.children,
-          { opacity: 0, y: 50, scale: 0.97 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.8,
-            stagger: 0.12,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: cardsRef.current,
-              start: "top 85%",
-              toggleActions: "play none none none",
-            },
-          },
-        );
-      }
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, []);
-
   return (
-    <section ref={sectionRef} className="py-28 sm:py-36 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-elevated/30 to-deep" />
-      <div className="absolute inset-0 noise-overlay opacity-20" />
+    <section ref={sectionRef} className="relative overflow-hidden py-28 sm:py-36">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#0b0907,#15110c_45%,#090907)]" />
+      <div className="absolute inset-0 oxidized-metal opacity-70" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div ref={headerRef} className="mx-auto mb-20 max-w-2xl text-center">
-          <Badge className="mb-5 border-amber-accent/30 bg-amber-accent/10 text-amber-accent">
-            <Shield className="mr-1.5 h-3 w-3" />
-            Why Choose Us
-          </Badge>
-          <h2 className="text-4xl font-black tracking-tight sm:text-5xl font-display leading-[1.1]">
-            Rust Done Right,{" "}
-            <span className="bg-gradient-to-r from-amber-accent to-copper-accent bg-clip-text text-transparent">
-              Since Day One
-            </span>
+        <div className="feature-reveal mx-auto mb-16 max-w-3xl text-center">
+          <Kicker icon={Shield}>Why Choose Us</Kicker>
+          <h2 className="mt-6 text-4xl font-black leading-[1] tracking-normal text-balance font-display sm:text-6xl">
+            Rust Done Right, <RustGradient>Since Day One</RustGradient>
           </h2>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
             We&apos;re not just a pipe shop. We&apos;re a rust farm. And that
             makes all the difference.
           </p>
         </div>
 
-        <div
-          ref={cardsRef}
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
-        >
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature) => (
-            <SpotlightCard
-              key={feature.title}
-              className="rounded-2xl"
-              spotlightColor="rgba(212, 148, 76, 0.12)"
-            >
-              <Card className="group bg-elevated/50 border-border/50 backdrop-blur-sm card-hover cursor-default h-full">
-                <CardContent className="space-y-5 p-7">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-accent/10 transition-all duration-500 group-hover:bg-amber-accent/20 group-hover:shadow-lg group-hover:shadow-amber-accent/10">
-                    <feature.icon className="h-6 w-6 text-amber-accent transition-transform duration-500 group-hover:scale-110" />
-                  </div>
-                  <h3 className="text-lg font-bold font-display">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-            </SpotlightCard>
+            <div key={feature.title} className="feature-reveal">
+              <SpotlightCard className="h-full rounded-lg" spotlightColor="rgba(212, 148, 76, 0.16)">
+                <Card className="h-full rounded-lg border-white/[0.08] bg-black/22 backdrop-blur-sm">
+                  <CardContent className="space-y-6 p-7">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-amber-accent/15 bg-amber-accent/10 text-amber-accent">
+                      <feature.icon className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-display text-2xl font-bold">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm leading-7 text-muted-foreground">
+                      {feature.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </SpotlightCard>
+            </div>
           ))}
         </div>
       </div>
@@ -932,18 +782,15 @@ function FeaturesSection() {
   );
 }
 
-/* ═══════════════════════════════════
-   TESTIMONIALS — Marquee + Cards
-   ═══════════════════════════════════ */
 function TestimonialsSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
+  useRevealTimeline(sectionRef, ".testimonial-reveal");
 
   const testimonials = [
     {
       name: "Margaret T.",
       role: "Interior Designer",
-      text: "I ordered the Heritage Rust collection for a client's loft renovation. The patina depth is absolutely stunning — you can't fake this kind of character.",
+      text: "I ordered the Heritage Rust collection for a client's loft renovation. The patina depth is absolutely stunning - you can't fake this kind of character.",
       stars: 5,
     },
     {
@@ -978,289 +825,153 @@ function TestimonialsSection() {
     },
   ];
 
-  useLayoutEffect(() => {
-    if (!sectionRef.current) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      if (headerRef.current) {
-        gsap.fromTo(
-          headerRef.current.children,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            stagger: 0.1,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: headerRef.current,
-              start: "top 85%",
-              toggleActions: "play none none none",
-            },
-          },
-        );
-      }
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, []);
-
   const TestimonialCard = ({ t }: { t: (typeof testimonials)[0] }) => (
-    <div className="relative w-[380px] sm:w-[420px] shrink-0 glass rounded-2xl p-8 border border-border/50 group hover:border-amber-accent/20 transition-colors duration-500">
+    <article className="relative w-[min(86vw,440px)] shrink-0 rounded-lg border border-white/[0.08] bg-[#14100c]/75 p-8 shadow-2xl shadow-black/35 backdrop-blur-md transition-colors duration-500 hover:border-amber-accent/25">
       <div className="quote-mark relative" />
-      <div className="space-y-5 pt-6">
+      <div className="space-y-5 pt-7">
         <div className="flex gap-1">
           {Array.from({ length: t.stars }).map((_, i) => (
-            <Star
-              key={i}
-              className="h-4 w-4 fill-amber-accent text-amber-accent"
-            />
+            <Star key={i} className="h-4 w-4 fill-amber-accent text-amber-accent" />
           ))}
         </div>
-        <p className="text-foreground/90 leading-relaxed text-[15px]">
+        <p className="text-[15px] leading-7 text-foreground/88">
           &ldquo;{t.text}&rdquo;
         </p>
-        <div className="h-[1px] bg-gradient-to-r from-amber-accent/20 to-transparent" />
+        <div className="h-px bg-gradient-to-r from-amber-accent/25 to-transparent" />
         <div>
           <p className="text-sm font-semibold text-foreground">{t.name}</p>
           <p className="text-xs text-muted-foreground">{t.role}</p>
         </div>
       </div>
-    </div>
+    </article>
   );
 
   return (
-    <section
-      ref={sectionRef}
-      className="py-28 sm:py-36 relative overflow-hidden"
-    >
-      <div className="absolute inset-0 noise-overlay opacity-20" />
-
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-16">
-        <div ref={headerRef} className="mx-auto max-w-2xl text-center">
-          <Badge className="mb-5 border-amber-accent/30 bg-amber-accent/10 text-amber-accent">
-            <Star className="mr-1.5 h-3 w-3" />
-            Testimonials
-          </Badge>
-          <h2 className="text-4xl font-black tracking-tight sm:text-5xl font-display leading-[1.1]">
-            Loved by Rust{" "}
-            <span className="bg-gradient-to-r from-amber-accent to-copper-accent bg-clip-text text-transparent">
-              Enthusiasts
-            </span>
+    <section ref={sectionRef} className="relative overflow-hidden py-28 sm:py-36">
+      <div className="absolute inset-0 bg-[#090907]" />
+      <div className="absolute inset-0 noise-overlay opacity-25" />
+      <div className="testimonial-reveal relative mx-auto mb-16 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl">
+          <Kicker icon={Star}>Testimonials</Kicker>
+          <h2 className="mt-6 text-4xl font-black leading-[1] tracking-normal text-balance font-display sm:text-6xl">
+            Loved by Rust <RustGradient>Enthusiasts</RustGradient>
           </h2>
         </div>
       </div>
 
-      <Marquee speed={40} pauseOnHover className="mb-8">
-        {testimonials.slice(0, 3).map((t) => (
-          <TestimonialCard key={t.name} t={t} />
-        ))}
-      </Marquee>
-
-      <Marquee speed={40} direction="right" pauseOnHover>
-        {testimonials.slice(3).map((t) => (
-          <TestimonialCard key={t.name} t={t} />
-        ))}
-      </Marquee>
+      <div className="testimonial-reveal">
+        <Marquee speed={42} pauseOnHover className="mb-6">
+          {testimonials.slice(0, 3).map((t) => (
+            <TestimonialCard key={t.name} t={t} />
+          ))}
+        </Marquee>
+        <Marquee speed={46} direction="right" pauseOnHover>
+          {testimonials.slice(3).map((t) => (
+            <TestimonialCard key={t.name} t={t} />
+          ))}
+        </Marquee>
+      </div>
     </section>
   );
 }
 
-/* ═══════════════════════════════════
-   FAQ SECTION — Animated accordion
-   ═══════════════════════════════════ */
 function FAQSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (!sectionRef.current || !headerRef.current) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        headerRef.current!.children,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.7,
-          stagger: 0.1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: headerRef.current,
-            start: "top 85%",
-            toggleActions: "play none none none",
-          },
-        },
-      );
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, []);
+  useRevealTimeline(sectionRef, ".faq-reveal");
 
   return (
-    <section id="faq" ref={sectionRef} className="relative py-28 sm:py-36">
-      <div className="absolute inset-0 bg-gradient-to-b from-elevated/30 to-deep" />
-      <div className="absolute inset-0 noise-overlay opacity-20" />
+    <section id="faq" ref={sectionRef} className="relative overflow-hidden py-28 sm:py-36">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#15110c,#090907)]" />
+      <div className="absolute inset-0 noise-overlay opacity-25" />
 
       <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div ref={headerRef} className="mx-auto mb-16 max-w-2xl text-center">
-          <Badge className="mb-5 border-amber-accent/30 bg-amber-accent/10 text-amber-accent">
-            FAQ
-          </Badge>
-          <h2 className="text-4xl font-black leading-[1.1] tracking-tight sm:text-5xl font-display">
-            Questions About Our{" "}
-            <span className="bg-gradient-to-r from-amber-accent to-copper-accent bg-clip-text text-transparent">
-              Rusty Pipes
-            </span>
+        <div className="faq-reveal mx-auto mb-14 max-w-2xl text-center">
+          <Kicker>FAQ</Kicker>
+          <h2 className="mt-6 text-4xl font-black leading-[1.05] tracking-normal text-balance font-display sm:text-6xl">
+            Questions About Our <RustGradient>Rusty Pipes</RustGradient>
           </h2>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+          <p className="mt-6 text-lg leading-8 text-muted-foreground">
             Helpful details for collectors, designers, and anyone searching for
             naturally oxidized rusty pipes in North Bay, Ontario.
           </p>
         </div>
 
-        <FAQAccordion items={homeFaqs.map((f) => ({ question: f.question, answer: f.answer }))} />
-      </div>
-    </section>
-  );
-}
-
-/* ═══════════════════════════════════
-   CTA SECTION — Grand finale
-   ═══════════════════════════════════ */
-function CTASection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (!contentRef.current || !sectionRef.current) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        contentRef.current!.children,
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.9,
-          stagger: 0.15,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 75%",
-            toggleActions: "play none none none",
-          },
-        },
-      );
-
-      if (imageRef.current) {
-        gsap.fromTo(
-          imageRef.current,
-          { opacity: 0, scale: 1.1, x: 50 },
-          {
-            opacity: 1,
-            scale: 1,
-            x: 0,
-            duration: 1.2,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top 75%",
-              toggleActions: "play none none none",
-            },
-          },
-        );
-      }
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, []);
-
-  return (
-    <section ref={sectionRef} className="py-28 sm:py-36">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#1a1408] via-[#1c1610] to-[#0e0c08]">
-          {/* Decorative elements */}
-          <div className="absolute inset-0 noise-overlay opacity-30" />
-          <div className="absolute top-0 right-0 h-[500px] w-[500px] translate-x-1/4 -translate-y-1/4 rounded-full bg-amber-accent/8 blur-[120px] animate-pulse-glow" />
-          <div className="absolute bottom-0 left-0 h-[400px] w-[400px] -translate-x-1/4 translate-y-1/4 rounded-full bg-copper-accent/5 blur-[100px] animate-pulse-glow" style={{ animationDelay: "3s" }} />
-
-          {/* Amber border glow at top */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-amber-accent/30 to-transparent" />
-
-          <div className="relative grid items-center gap-12 p-10 sm:p-14 lg:grid-cols-2 lg:p-20">
-            <div ref={contentRef} className="space-y-8">
-              <h2 className="text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl font-display leading-[1.1] text-foreground">
-                Ready to Bring Home{" "}
-                <span className="bg-gradient-to-r from-amber-accent to-copper-accent bg-clip-text text-transparent">
-                  the Rust?
-                </span>
-              </h2>
-              <p className="max-w-md leading-relaxed text-muted-foreground text-lg">
-                Visit our store and discover pipes in every stage of oxidation —
-                from fresh surface rust to deep heritage patina. Your perfect
-                pipe is waiting.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <MagneticButton>
-                  <Button
-                    render={<Link href="/store" />}
-                    nativeButton={false}
-                    size="lg"
-                    className="h-14 bg-gradient-to-r from-amber-accent to-copper-accent px-10 text-base font-semibold text-deep hover:shadow-xl hover:shadow-amber-accent/25 transition-all duration-300 border-0 rounded-full"
-                  >
-                    Visit the Store
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </MagneticButton>
-              </div>
-            </div>
-
-            <div ref={imageRef} className="hidden lg:block relative">
-              <div className="absolute inset-0 bg-amber-accent/10 blur-[80px] rounded-full" />
-              <ParallaxImage
-                src={landingImages.fittings.src}
-                alt={landingImages.fittings.alt}
-                className="aspect-[4/3] rounded-2xl ring-1 ring-white/5 relative"
-                sizes="(min-width: 1024px) 40vw, 100vw"
-                speed={0.15}
-              />
-            </div>
-          </div>
+        <div className="faq-reveal">
+          <FAQAccordion
+            items={homeFaqs.map((f) => ({
+              question: f.question,
+              answer: f.answer,
+            }))}
+          />
         </div>
       </div>
     </section>
   );
 }
 
-/* ═══════════════════════════════════
-   PAGE EXPORT
-   ═══════════════════════════════════ */
+function CTASection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  useRevealTimeline(sectionRef, ".cta-reveal", "top 75%");
+
+  return (
+    <section ref={sectionRef} className="relative overflow-hidden px-4 py-28 sm:px-6 sm:py-36 lg:px-8">
+      <div className="absolute inset-0 bg-[#090907]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_22%,rgba(212,148,76,0.2),transparent_34%)]" />
+      <div className="absolute inset-0 rust-vignette" />
+      <div className="absolute inset-0 noise-overlay opacity-35" />
+
+      <div className="relative mx-auto grid max-w-7xl items-center gap-10 overflow-hidden rounded-lg border border-amber-accent/15 bg-black/30 p-7 shadow-2xl shadow-black/45 backdrop-blur-sm sm:p-12 lg:grid-cols-[0.9fr_1.1fr] lg:p-16">
+        <div className="cta-reveal space-y-7">
+          <h2 className="text-4xl font-black leading-[1] tracking-normal text-balance font-display sm:text-6xl">
+            Ready to Bring Home <RustGradient>the Rust?</RustGradient>
+          </h2>
+          <p className="max-w-lg text-lg leading-8 text-muted-foreground">
+            Visit our store and discover pipes in every stage of oxidation -
+            from fresh surface rust to deep heritage patina. Your perfect pipe
+            is waiting.
+          </p>
+          <MagneticButton>
+            <Button
+              render={<Link href="/store" />}
+              nativeButton={false}
+              size="lg"
+              className="rust-fill-button h-14 overflow-hidden rounded-full border-0 bg-amber-accent px-10 text-base font-bold text-deep"
+            >
+              <span className="relative z-10 flex items-center">
+                Visit the Store
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </span>
+            </Button>
+          </MagneticButton>
+        </div>
+
+        <div className="cta-reveal relative min-h-[320px] overflow-hidden rounded-lg ring-1 ring-white/10 lg:min-h-[520px]">
+          <Image
+            src={landingImages.fittings.src}
+            alt={landingImages.fittings.alt}
+            fill
+            sizes="(min-width: 1024px) 55vw, 100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 metallic-sheen" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   return (
     <>
       <HeroSection />
       <StatsBar />
-      <div className="section-divider" />
       <FeaturedProductsSection />
-      <div className="section-divider" />
       <AboutSection />
-      <div className="section-divider" />
       <ProcessSection />
-      <div className="section-divider" />
       <FeaturesSection />
       <TestimonialsSection />
-      <div className="section-divider" />
       <FAQSection />
-      <div className="section-divider" />
       <CTASection />
     </>
   );
