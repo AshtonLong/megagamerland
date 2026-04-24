@@ -81,7 +81,6 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
-            <div className="grain" aria-hidden="true" />
           </SmoothScroll>
         </GsapProvider>
       </body>
